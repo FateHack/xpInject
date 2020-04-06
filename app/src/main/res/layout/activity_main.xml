@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.fate.xpInject.MainActivity"
+    android:background="@mipmap/hy">
+
+
+    <ListView
+        android:id="@+id/appList"
+        android:layout_width="434dp"
+        android:layout_height="match_parent"
+        tools:layout_editor_absoluteX="8dp"
+        tools:layout_editor_absoluteY="8dp"
+        android:background="#e0ede8e8"/>
+
+    <android.support.v7.view.menu.ActionMenuItemView
+        android:layout_width="10dp"
+        android:layout_height="10dp"
+        android:id="@+id/menuItem"/>
+</LinearLayout>
