@@ -56,5 +56,4 @@ public class SoAdapter extends ArrayAdapter<String> {
         return selectedApp.equals(currentApp);
     }
 
-
 }

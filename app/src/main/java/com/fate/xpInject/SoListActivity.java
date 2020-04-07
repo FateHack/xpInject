@@ -10,15 +10,16 @@ import android.os.Handler;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
+import java.io.BufferedWriter;
 import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,9 +28,6 @@ public class SoListActivity extends AppCompatActivity {
 
     private List<String> soNames = new ArrayList<>();
     private ListView soList;
-    private static final String INJECT = "InjectedApp";
-    SharedPreferences selectedApp;
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,20 +36,11 @@ public class SoListActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setTitle("List<SO>");
         }
-        selectedApp = GlobalApplication.getInstance().getSharedPreferences(INJECT, Context.MODE_PRIVATE);
-        final SharedPreferences.Editor editor = selectedApp.edit();
-        selectedApp.getString(INJECT, null);
         setContentView(R.layout.activity_so_list);
         soList = (ListView) findViewById(R.id.soList);
         getAllSo();
         SoAdapter soAdapter = new SoAdapter(this, R.layout.so_checked_item, soNames);
         soList.setAdapter(soAdapter);
-//        if (selectedApp.getString("App", null) != null) {
-//            if (!selectedApp.getString("App", null).equals(getIntent().getStringExtra("packageName"))) {
-//                soList.setBackgroundColor(Color.WHITE);
-//            }
-//        }
-
         soList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -65,11 +54,8 @@ public class SoListActivity extends AppCompatActivity {
 //                        }
 //                    }
 //                }
-                String selectedSo = soNames.get(position);
+                final String selectedSo = soNames.get(position);
                 Toast.makeText(getBaseContext(), "Intercepted " + selectedSo + " success! ", Toast.LENGTH_SHORT).show();
-                editor.putString("App", getIntent().getStringExtra("packageName"));
-                editor.putString("soName", selectedSo);
-                editor.commit();
                 try {
                     FileUtils.writeStr("/sdcard/App", getIntent().getStringExtra("packageName"));
                     FileUtils.writeStr("/sdcard/soName", selectedSo);
@@ -78,26 +64,8 @@ public class SoListActivity extends AppCompatActivity {
                     e.printStackTrace();
                 }
                 String path = getApplicationInfo().nativeLibraryDir + "/libfate.so";
-                String path2 = getIntent().getStringExtra("nativeLibraryDir") + "/libunity.so";
                 moveFileToSystem(getIntent().getStringExtra("nativeLibraryDir"), path, getIntent().getStringExtra("nativeLibraryDir"));
                 exusecmd("chmod 777 " + getIntent().getStringExtra("nativeLibraryDir") + "/libfate.so");
-                File sdFile = new File("/sdcard/path");
-                if (!sdFile.exists()) {
-                    try {
-                        sdFile.createNewFile();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-                try {
-                    FileOutputStream fos = new FileOutputStream(sdFile);
-                    fos.write(path2.getBytes());
-                    fos.close();
-                } catch (FileNotFoundException e) {
-                    e.printStackTrace();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
                 Toast.makeText(getBaseContext(), "You will enter  " + getIntent().getStringExtra("appName"), Toast.LENGTH_SHORT).show();
                 Intent home = new Intent(Intent.ACTION_MAIN);
                 home.addCategory(Intent.CATEGORY_HOME);
@@ -137,11 +105,16 @@ public class SoListActivity extends AppCompatActivity {
         String path = getIntent().getStringExtra("nativeLibraryDir");
         File files = new File(path);
         File[] listFiles = files.listFiles();
-        for (File file : listFiles) {
-            if (file.getName().endsWith(".so") && !file.getName().contains("fate")) {
-                soNames.add(file.getName());
+        if (listFiles != null) {
+            for (File file : listFiles) {
+                if (file.getName().endsWith(".so") && !file.getName().contains("fate")) {
+                    soNames.add(file.getName());
+                }
             }
+        } else {
+            soNames.clear();
         }
+
     }
 
 

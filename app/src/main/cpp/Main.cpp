@@ -1,19 +1,29 @@
 #include <jni.h>
 #include <string>
 #include <stdlib.h>
-#include <android/log.h>
 #include <cxxabi.h>
 #include <dlfcn.h>
+#include <hookzz.h>
 #include "include/Utils.h"
 #include "include/xhook.h"
 #include "include/hookzz.h"
+#include "include/MemScanner.h"
+#include "include/Log.h"
+#include <sys/ptrace.h>
+#include <unistd.h>
 
-#define LOG_TAG "Fuck"
-#define LOGW(...)  __android_log_print(ANDROID_LOG_WARN,LOG_TAG,__VA_ARGS__)
-#define LOGD(...)  __android_log_print(ANDROID_LOG_DEBUG,LOG_TAG,__VA_ARGS__)
-#define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
-#define LOGF(...)  __android_log_print(ANDROID_LOG_FATAL,LOG_TAG,__VA_ARGS__)
-#define LOGI(...)  __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#if !defined(PT_DENY_ATTACH)
+#define PT_DENY_ATTACH 31
+#endif
+#if !defined(SYS_ptrace)
+#define SYS_ptrace 26
+#endif
+#if !defined(SYS_syscall)
+#define SYS_syscall 0
+#endif
+#if !defined(SYS_sysctl)
+#define SYS_sysctl 202
+#endif
 
 JNIEXPORT jint
 
@@ -38,23 +48,23 @@ JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     } while (0);
     LOGD("version=%d", result);
     //native层 loadlibrary
-    if (!getLibraryMap(getSoName().c_str()).isValid()) {
-        char nativeLibPath[1024] = {0};
-        sprintf(nativeLibPath, "/data/data/%s/lib/%s", getProcName().c_str(), getSoName().c_str());
-        void *handle = dlopen(nativeLibPath, RTLD_NOW);
-        if (handle) {
-            void *sym = dlsym(handle, "JNI_OnLoad");
-            if (sym == nullptr) {
-                LOGD("sym is null");
-            } else {
-                typedef int (*JNI_OnLoadFn)(JavaVM *, void *);
-                JNI_OnLoadFn jni_on_load = reinterpret_cast<JNI_OnLoadFn>(sym);
-                int version = (*jni_on_load)(vm, nullptr);
-            }
-        } else {
-            LOGD("handle is null");
-        }
-    }
+//    if (!getLibraryMap(getSoName().c_str()).isValid()) {
+//        char nativeLibPath[1024] = {0};
+//        sprintf(nativeLibPath, "/data/data/%s/lib/%s", getProcName().c_str(), getSoName().c_str());
+//        void *handle = dlopen(nativeLibPath, RTLD_NOW);
+//        if (handle) {
+//            void *sym = dlsym(handle, "JNI_OnLoad");
+//            if (sym == nullptr) {
+//                LOGD("sym is null");
+//            } else {
+//                typedef int (*JNI_OnLoadFn)(JavaVM *, void *);
+//                JNI_OnLoadFn jni_on_load = reinterpret_cast<JNI_OnLoadFn>(sym);
+//                int version = (*jni_on_load)(vm, nullptr);
+//            }
+//        } else {
+//            LOGD("handle is null");
+//        }
+//    }
     return result;
 }
 
@@ -62,17 +72,32 @@ int (*__kill)(pid_t __pid, int __signal);
 
 int $__kill(pid_t pid, int sig) {
     LOGD("pid=%d,sig=%d", pid, sig);
-//    if (sig == 9) {
-//        pthread_exit(NULL);
-//        return 0;
-//    }
+    if (sig == 9) {
+        pthread_exit(NULL);
+    }
     return __kill(pid, sig);
+}
+
+
+void (*ori_exit)(int status);
+
+void fake_exit(int status) {
+    LOGD("status=%d", status);
+    ori_exit(status);
+}
+
+void kill_pre_call(RegState *rs, ThreadStack *ts, CallStack *cs, const HookEntryInfo *info) {
+    uint32_t base = (uint32_t) getLibraryMap("libcrackme.so").startAddr;
+    LOGD("off--%p", (void *) (rs->lr - base));
+    LOGD("pre");
 }
 
 
 __attribute__((constructor)) void entry() {
 
     LOGD("inject success!!");
-    xhook_register(".*\\.so$", "kill", (void *) $__kill, (void **) &__kill);
-    xhook_refresh(0);
+    ZzHookReplace((void *) kill, (void *) $__kill, (void **) &__kill);
+    ZzHookReplace((void *) exit, (void *) fake_exit, (void **) &ori_exit);
+    ZzHookPrePost((void *) kill, kill_pre_call, NULL);
+
 }

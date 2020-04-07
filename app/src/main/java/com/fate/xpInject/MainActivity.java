@@ -34,7 +34,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         upgradeRootPermission(getPackageCodePath());
         requestPower();
-        String isActived = "";
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             if (isModuleActive()) {
@@ -53,30 +52,22 @@ public class MainActivity extends AppCompatActivity {
         appList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // Toast.makeText(getBaseContext(), "You have selected "+appInfos.get(position).getAppName(), Toast.LENGTH_SHORT).show();
-//                for (int i = 0; i < parent.getCount(); i++) {
-//                    View v = parent.getChildAt(i);
-//                    if (v != null) {
-//                        if (position == i) {
-//                            v.setBackgroundColor(Color.argb(60, 0, 0, 255));
-//                        } else {
-//                            if (v != null) {
-//                                v.setBackgroundColor(Color.argb(224, 237, 232, 232));
-//                            }
-//                        }
-//                    }
-//                }
                 Intent intent = new Intent();
                 intent.setClass(MainActivity.this, SoListActivity.class);
-                intent.putExtra("nativeLibraryDir", appInfos.get(position).getApplicationInfo().nativeLibraryDir);
-                intent.putExtra("packageName", appInfos.get(position).getApplicationInfo().packageName);
-                intent.putExtra("appName", appInfos.get(position).getAppName());
-                try {
-                    FileUtils.writeStr("/sdcard/currentApp", appInfos.get(position).getApplicationInfo().packageName);
-                } catch (IOException e) {
-                    e.printStackTrace();
+                if (!appInfos.get(position).getApplicationInfo().nativeLibraryDir.isEmpty()) {
+                    intent.putExtra("nativeLibraryDir", appInfos.get(position).getApplicationInfo().nativeLibraryDir);
+                    intent.putExtra("packageName", appInfos.get(position).getApplicationInfo().packageName);
+                    intent.putExtra("appName", appInfos.get(position).getAppName());
+                    try {
+                        FileUtils.writeStr("/sdcard/currentApp", appInfos.get(position).getApplicationInfo().packageName);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    startActivity(intent);
+                }else {
+                    Toast.makeText(getApplicationContext(), "该APP下没有lib目录", Toast.LENGTH_SHORT).show();
                 }
-                startActivity(intent);
+
             }
         });
     }
@@ -194,6 +185,4 @@ public class MainActivity extends AppCompatActivity {
         }
         return true;
     }
-
-
 }
