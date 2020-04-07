@@ -11,19 +11,6 @@
 #include <sys/ptrace.h>
 #include <unistd.h>
 
-#if !defined(PT_DENY_ATTACH)
-#define PT_DENY_ATTACH 31
-#endif
-#if !defined(SYS_ptrace)
-#define SYS_ptrace 26
-#endif
-#if !defined(SYS_syscall)
-#define SYS_syscall 0
-#endif
-#if !defined(SYS_sysctl)
-#define SYS_sysctl 202
-#endif
-
 JNIEXPORT jint
 
 JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
