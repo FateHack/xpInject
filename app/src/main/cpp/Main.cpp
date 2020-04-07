@@ -82,7 +82,7 @@ void (*ori_exit)(int status);
 
 void fake_exit(int status) {
     LOGD("status=%d", status);
-    ori_exit(status);
+    //ori_exit(status);
 }
 
 void kill_pre_call(RegState *rs, ThreadStack *ts, CallStack *cs, const HookEntryInfo *info) {
@@ -90,12 +90,22 @@ void kill_pre_call(RegState *rs, ThreadStack *ts, CallStack *cs, const HookEntry
     // LOGD("off--%p", (void *) (rs->lr - base));
 }
 
+void *(*ori_dlopen)(const char *path, int flag);
+
+void *fake_dlopen(const char *path, int flag) {
+    LOGD("path---%s", path);
+    return ori_dlopen(path, flag);
+}
+
+
 
 __attribute__((constructor)) void entry() {
-
     LOGD("inject success!!");
-    ZzHookReplace((void *) kill, (void *) $__kill, (void **) &__kill);
-    ZzHookReplace((void *) exit, (void *) fake_exit, (void **) &ori_exit);
-    ZzHookPrePost((void *) kill, kill_pre_call, NULL);
+////    xhook_register(".*\\.so$","dlopen",(void*)fake_dlopen,(void**)&ori_dlopen);
+////    xhook_refresh(0);
+//    ZzHookReplace((void *) dlopen, (void *) fake_dlopen, (void **) &ori_dlopen);
+//    ZzHookReplace((void *) kill, (void *) $__kill, (void **) &__kill);
+//    ZzHookReplace((void *) exit, (void *) fake_exit, (void **) &ori_exit);
+////    ZzHookPrePost((void *) kill, kill_pre_call, NULL);
 
 }
