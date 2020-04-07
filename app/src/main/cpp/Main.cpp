@@ -7,7 +7,6 @@
 #include "include/Utils.h"
 #include "include/xhook.h"
 #include "include/hookzz.h"
-#include "include/MemScanner.h"
 #include "include/Log.h"
 #include <sys/ptrace.h>
 #include <unistd.h>
