@@ -87,9 +87,8 @@ void fake_exit(int status) {
 }
 
 void kill_pre_call(RegState *rs, ThreadStack *ts, CallStack *cs, const HookEntryInfo *info) {
-    uint32_t base = (uint32_t) getLibraryMap("libcrackme.so").startAddr;
-    LOGD("off--%p", (void *) (rs->lr - base));
-    LOGD("pre");
+    // uint32_t base = (uint32_t) getLibraryMap("libcrackme.so").startAddr;
+    // LOGD("off--%p", (void *) (rs->lr - base));
 }
 
 
